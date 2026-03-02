@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,12 +11,47 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import z from "zod";
+
+const schema = z
+  .object({
+    name: z.string(),
+    email: z.email("Formato do e-mail inválido"),
+    password: z.string().nonempty("Senha deve conter no mínimo 8 caracteres."),
+    confirm_password: z
+      .string()
+      .nonempty("Senha deve conter no mínimo 8 caracteres."),
+  })
+  .refine(({ password, confirm_password }) => password === confirm_password, {
+    message: "As senhas não corresponde.",
+    path: ["confirm_password"],
+  });
+
+type FormData = z.infer<typeof schema>;
 
 export default function Signup() {
+  const form = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirm_password: "",
+    },
+  });
+
+  const onSubmit = (data: FormData) => {
+    console.log(data);
+  };
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
@@ -26,59 +63,115 @@ export default function Signup() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form>
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="name">Nome</FieldLabel>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Nome Sobrenome..."
-                    required
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    required
-                  />
-                  <FieldDescription>
-                    Usaremos este endereço de e-mail para entrar em contato com
-                    você. Não compartilharemos seu e-mail com mais ninguém.
-                  </FieldDescription>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="password">Senha</FieldLabel>
-                  <Input id="password" type="password" required />
-                  <FieldDescription>
-                    Deve ter no mínimo 8 caracteres.
-                  </FieldDescription>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="confirm-password">
-                    Confirmar senha
-                  </FieldLabel>
-                  <Input id="confirm-password" type="password" required />
-                  <FieldDescription>
-                    Por favor, confirme sua senha.
-                  </FieldDescription>
-                </Field>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FieldGroup>
-                  <Field>
-                    <Button type="submit">Criar Conta</Button>
-                    <Button variant="outline" type="button">
-                      Entrar com Google
-                    </Button>
-                    <FieldDescription className="px-6 text-center">
-                      Já tem uma conta? <a href="#">Entrar</a>
-                    </FieldDescription>
-                  </Field>
+                  <Controller
+                    name="name"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Nome</FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="Nome Sobrenome..."
+                          autoComplete="username"
+                          required
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+
+                  <Controller
+                    name="email"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="email@example.com"
+                          autoComplete="email"
+                          required
+                        />
+                        <FieldDescription>
+                          Usaremos este endereço de e-mail para entrar em
+                          contato com você. Não compartilharemos seu e-mail com
+                          mais ninguém.
+                        </FieldDescription>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+
+                  <Controller
+                    name="password"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Senha</FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          type="password"
+                          placeholder="********"
+                          autoComplete="new-password"
+                          required
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+
+                  <Controller
+                    name="confirm_password"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          Confirmar Senha
+                        </FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          type="password"
+                          placeholder="********"
+                          autoComplete="new-password"
+                          required
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                  <FieldGroup>
+                    <Field>
+                      <Button type="submit">Criar Conta</Button>
+                      <Button variant="outline" type="button">
+                        Entrar com Google
+                      </Button>
+                      <FieldDescription className="px-6 text-center">
+                        Já tem uma conta? <a href="login">Entrar</a>
+                      </FieldDescription>
+                    </Field>
+                  </FieldGroup>
                 </FieldGroup>
-              </FieldGroup>
-            </form>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
