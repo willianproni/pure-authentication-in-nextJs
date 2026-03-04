@@ -18,17 +18,17 @@ import {
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 
 const schema = z
   .object({
-    name: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
     email: z.email("Formato do e-mail inválido"),
-    password: z.string().nonempty("Senha deve conter no mínimo 8 caracteres."),
-    confirm_password: z
-      .string()
-      .nonempty("Senha deve conter no mínimo 8 caracteres."),
+    password: z.string().min(8, "Senha deve conter no mínimo 8 caracteres."),
+    confirm_password: z.string(),
   })
   .refine(({ password, confirm_password }) => password === confirm_password, {
     message: "As senhas não corresponde.",
@@ -41,15 +41,21 @@ export default function Signup() {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirm_password: "",
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      console.log(data);
+      await axios.post("/api/auth/sign-up", data);
+    } finally {
+      console.log("Finally request");
+    }
   };
 
   return (
@@ -67,16 +73,39 @@ export default function Signup() {
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FieldGroup>
                   <Controller
-                    name="name"
+                    name="firstName"
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor={field.name}>Nome</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          Primeiro nome
+                        </FieldLabel>
                         <Input
                           {...field}
                           id={field.name}
                           aria-invalid={fieldState.invalid}
-                          placeholder="Nome Sobrenome..."
+                          placeholder="Nome..."
+                          autoComplete="username"
+                          required
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+
+                  <Controller
+                    name="lastName"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Sobrenome</FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="Sobrenome..."
                           autoComplete="username"
                           required
                         />
