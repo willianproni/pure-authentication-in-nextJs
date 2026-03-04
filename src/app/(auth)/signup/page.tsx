@@ -19,7 +19,10 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 const schema = z
@@ -38,6 +41,10 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 
 export default function Signup() {
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -51,10 +58,18 @@ export default function Signup() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      console.log(data);
+      setIsLoading(true);
       await axios.post("/api/auth/sign-up", data);
+
+      router.push("/login");
+
+      toast.success("Conta cadastrada com sucesso", {
+        description: "Faça login agora mesmo.",
+      });
+    } catch {
+      toast.error("Erro ao criar sua conta");
     } finally {
-      console.log("Finally request");
+      setIsLoading(false);
     }
   };
 
@@ -189,7 +204,9 @@ export default function Signup() {
                   />
                   <FieldGroup>
                     <Field>
-                      <Button type="submit">Criar Conta</Button>
+                      <Button type="submit" disabled={isLoading}>
+                        {!isLoading ? "Criar conta" : "Criando conta..."}
+                      </Button>
                       <Button variant="outline" type="button">
                         Entrar com Google
                       </Button>
