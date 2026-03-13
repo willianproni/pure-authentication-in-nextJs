@@ -55,7 +55,21 @@ export async function POST(request: NextRequest) {
       expiresIn: "1h",
     });
 
-    return NextResponse.json({ accessToken }, { status: 200 });
-    //Create access Token
-  } catch {}
+    const response = new NextResponse(null, { status: 204 });
+
+    return response.cookies.set("accessToken", accessToken, {
+      httpOnly: true,
+      maxAge: 60 * 60,
+      path: "/",
+      sameSite: "strict",
+      secure: true,
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        error: "Unexpected Error",
+      },
+      { status: 500 },
+    );
+  }
 }
