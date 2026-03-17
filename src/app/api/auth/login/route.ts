@@ -57,19 +57,14 @@ export async function POST(request: NextRequest) {
 
     const response = new NextResponse(null, { status: 204 });
 
-    return response.cookies.set("accessToken", accessToken, {
+    response.cookies.set("accessToken", accessToken, {
       httpOnly: true,
       maxAge: 60 * 60,
       path: "/",
       sameSite: "strict",
       secure: true,
     });
-  } catch {
-    return NextResponse.json(
-      {
-        error: "Unexpected Error",
-      },
-      { status: 500 },
-    );
-  }
+
+    return response;
+  } catch {}
 }
