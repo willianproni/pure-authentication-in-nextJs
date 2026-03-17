@@ -18,7 +18,11 @@ import {
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 const schema = z.object({
@@ -29,6 +33,9 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function Login() {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -37,8 +44,18 @@ export default function Login() {
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true);
+      await axios.post("/api/auth/login", data);
+
+      router.push("/");
+    } catch (error) {
+      toast.error("Credenciais inválidas!");
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,7 +127,9 @@ export default function Login() {
                     />
 
                     <Field>
-                      <Button type="submit">Entrar</Button>
+                      <Button disabled={isLoading} type="submit">
+                        {isLoading ? "Entrando sua conta..." : "Entrar"}
+                      </Button>
                       <Button variant="outline" type="button">
                         Entrar com Google
                       </Button>

@@ -18,17 +18,20 @@ import {
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 const schema = z
   .object({
-    name: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
     email: z.email("Formato do e-mail inválido"),
-    password: z.string().nonempty("Senha deve conter no mínimo 8 caracteres."),
-    confirm_password: z
-      .string()
-      .nonempty("Senha deve conter no mínimo 8 caracteres."),
+    password: z.string().min(8, "Senha deve conter no mínimo 8 caracteres."),
+    confirm_password: z.string(),
   })
   .refine(({ password, confirm_password }) => password === confirm_password, {
     message: "As senhas não corresponde.",
@@ -38,18 +41,36 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 
 export default function Signup() {
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirm_password: "",
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true);
+      await axios.post("/api/auth/sign-up", data);
+
+      router.push("/login");
+
+      toast.success("Conta cadastrada com sucesso", {
+        description: "Faça login agora mesmo.",
+      });
+    } catch {
+      toast.error("Erro ao criar sua conta");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,16 +88,39 @@ export default function Signup() {
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FieldGroup>
                   <Controller
-                    name="name"
+                    name="firstName"
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor={field.name}>Nome</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          Primeiro nome
+                        </FieldLabel>
                         <Input
                           {...field}
                           id={field.name}
                           aria-invalid={fieldState.invalid}
-                          placeholder="Nome Sobrenome..."
+                          placeholder="Nome..."
+                          autoComplete="username"
+                          required
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+
+                  <Controller
+                    name="lastName"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor={field.name}>Sobrenome</FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          aria-invalid={fieldState.invalid}
+                          placeholder="Sobrenome..."
                           autoComplete="username"
                           required
                         />
@@ -160,7 +204,9 @@ export default function Signup() {
                   />
                   <FieldGroup>
                     <Field>
-                      <Button type="submit">Criar Conta</Button>
+                      <Button type="submit" disabled={isLoading}>
+                        {!isLoading ? "Criar conta" : "Criando conta..."}
+                      </Button>
                       <Button variant="outline" type="button">
                         Entrar com Google
                       </Button>
